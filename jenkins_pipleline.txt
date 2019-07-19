@@ -1,0 +1,11 @@
+node{
+  try{
+    stage('Deploy on K8s'){
+sh "ansible-playbook /var/lib/jenkins/ansible/deploy-guestbook.yml  --user=jenkins"
+    }
+     }
+
+     catch (err) {
+      currentBuild.result = 'FAILURE'
+    }
+}
