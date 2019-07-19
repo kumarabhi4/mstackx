@@ -36,7 +36,7 @@ To complete this task I have used Google cloud free tier.
 #gcloud compute firewall-rules create k8s-stackx-allow-external --allow tcp:22,tcp:6443,icmp --network k8s-stackx --source-ranges 0.0.0.0/0
 #gcloud compute firewall-rules list --filter="network:k8s-stackx"
 
-3.> Allocate static IP
+3.> Allocate static IP 
 #gcloud compute addresses create k8s-stackx --region $(gcloud config get-value compute/region)
 
 #gcloud compute addresses list --filter="name=('k8s-stackx')"
