@@ -352,4 +352,4 @@ cd charts/stable/elasticsearch
 helm install -f values.yaml stable/elasticsearch --name elasticsearch --namespace kube-logging
 
 
-25.>
+25.> 
