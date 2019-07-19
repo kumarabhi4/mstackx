@@ -1,0 +1,39 @@
+- hosts: localhost
+  vars:
+    ImageName: ""
+    Namespace: ""
+    imageTag: ""
+  #remote_user: ansible
+  #become: true
+  gather_facts: no
+  connection: local
+  tasks:
+    - name: Deploy Guestbook redis-master
+      command: "kubectl apply -f guestbook/redis-master-deployment.yaml"
+      delegate_to: localhost
+      ignore_errors: yes
+    - name: Deploy Guestbook redis-master-service
+      command: "kubectl apply -f guestbook/redis-master-service.yaml"
+      delegate_to: localhost
+      ignore_errors: yes
+    - name: Deploy Guestbook redis-slave
+      command: "kubectl apply -f guestbook/redis-slave-deployment.yaml"
+      delegate_to: localhost
+      ignore_errors: yes
+    - name: Deploy Guestbook redis-slave-service
+      command: "kubectl apply -f guestbook/redis-slave-service.yaml"
+      delegate_to: localhost
+      ignore_errors: yes
+    - name: Deploy Guestbook Frontend
+      command: "kubectl apply -f guestbook/frontend-deployment.yaml"
+      delegate_to: localhost
+      ignore_errors: yes
+    - name: Deploy Guestbook Frontend service
+      command: "kubectl apply -f guestbook/frontend-service.yaml"
+      delegate_to: localhost
+      ignore_errors: yes
+    - name: Scale Guestbook Web Frontend
+      command: "kubectl scale deployment frontend --replicas=3"
+      delegate_to: localhost
+      ignore_errors: yes
+      
