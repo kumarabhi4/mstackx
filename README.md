@@ -12,28 +12,28 @@ $gcloud compute networks create k8s-stackx --subnet-mode custom
 $gcloud compute networks subnets create k8s-subnet --network k8s-stackx --range 10.240.0.0/24
 `
 2.> Create filewall rules
-
+`
 #gcloud compute firewall-rules create k8s-stackx-allow-internal --allow tcp,udp,icmp --network k8s-stackx --source-ranges 10.240.0.0/24,10.200.0.0/16
 #gcloud compute firewall-rules create k8s-stackx-allow-external --allow tcp:22,tcp:6443,icmp --network k8s-stackx --source-ranges 0.0.0.0/0
 #gcloud compute firewall-rules list --filter="network:k8s-stackx"
-
+`
 3.> Allocate static IP
 
+`
 #gcloud compute addresses create k8s-stackx --region $(gcloud config get-value compute/region)
 #gcloud compute addresses list --filter="name=('k8s-stackx')"
+`
 
 4.> List down the public static IP and take node of it.
-`
-###
-[abhinit@centos7 ~]$ gcloud compute addresses list --filter="name=('k8s-stackx')"
+
+`[abhinit@centos7 ~]$ gcloud compute addresses list --filter="name=('k8s-stackx')"
 NAME        ADDRESS/RANGE  TYPE      PURPOSE  NETWORK  REGION       SUBNET  STATUS
 k8s-stackx  34.93.7.80     EXTERNAL                    asia-south1          RESERVED
-[abhinit@centos7 ~]$
-###
-`
+[abhinit@centos7 ~]$`
+
 5.> Configure compute instances
-`
-###Configure Master Servers
+
+`Configure Master Servers
 for i in 0 1 2; do
   gcloud compute instances create c1-master-${i} \
     --async \
@@ -46,9 +46,9 @@ for i in 0 1 2; do
     --scopes compute-rw,storage-ro,service-management,service-control,logging-write,monitoring \
     --subnet k8s-subnet \
     --tags k8s-stackx,master
-done
-`
-####Configure worker nodes
+done`
+
+`Configure worker nodes
 for i in 0 1 2; do
   gcloud compute instances create c1-node-${i} \
     --async \
@@ -62,7 +62,7 @@ for i in 0 1 2; do
     --scopes compute-rw,storage-ro,service-management,service-control,logging-write,monitoring \
     --subnet k8s-subnet \
     --tags k8s-stackx,node
-done
+done`
 
 6.> List the configure compute instances
 
