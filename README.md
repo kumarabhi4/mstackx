@@ -7,10 +7,10 @@ Prerequisites:
 Steps:
 ------
 1.> Configure network in Google cloud
-   `
+   ```
     $gcloud compute networks create k8s-stackx --subnet-mode custom
     $gcloud compute networks subnets create k8s-subnet --network k8s-stackx --range 10.240.0.0/24
-   `
+   ```
 2.> Create filewall rules
 `
 #gcloud compute firewall-rules create k8s-stackx-allow-internal --allow tcp,udp,icmp --network k8s-stackx --source-ranges 10.240.0.0/24,10.200.0.0/16
