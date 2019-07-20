@@ -166,24 +166,24 @@ Then you can join any number of worker nodes by running the following on each as
 ```
 
 11> Used network plugin "Calico" initially, steps are below, but that failed somehow and didn't have much time so went with weave:-
-
+```
 wget https://docs.projectcalico.org/v3.3/getting-started/kubernetes/installation/hosted/rbac-kdd.yaml
 wget https://docs.projectcalico.org/v3.3/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
 
 kubectl apply -f rbac-kdd.yaml
 kubectl apply -f calico.yaml
-
+```
 12.> Deleted calico pods and deployed weave
-
+```
 kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
-
+```
 13.> Prepare Jenkins server on tools server
-
+```
 gcloud compute instances create srv-tool --async --boot-disk-size 200GB --can-ip-forward --image-family ubuntu-1604-lts --image-project ubuntu-os-cloud --machine-type n1-standard-1 \
 --private-network-ip 10.240.0.3 --scopes compute-rw,storage-ro,service-management,service-control,logging-write,monitoring --subnet k8s-subnet --tags k8s-stackx,tools
-
+```
 14.> Install jenkins
-
+```
 apt-get install default-jre
 
 wget -q -O - https://pkg.jenkins.io/debian/jenkins-ci.org.key | sudo apt-key add -
@@ -194,100 +194,106 @@ apt-get update
 apt-get install jenkins
 
 systemctl status jenkins
-
+```
 
 15.> Configure jenkins to use kubectl
-
+```
 su - jenkins
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
-
+```
 16.> Install and configure Helm
-
+```
 curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > get_helm.sh; chmod 700 get_helm.sh; ./get_helm.sh
-
+```
 17.> Configure helm
-
+```
 mkdir helm
 cd helm
-
+```
 #Create Tiller service account, content for tiller SA, tiller-serviceaccount.yaml
-a
-#kubectl apply -f service-account.yaml
-
+```
+kubectl apply -f service-account.yaml
+```
 #Create cluster account rolebinding, role-binding.yaml with below content
-#kubectl apply -f role-binding.yaml
-
+```
+kubectl apply -f role-binding.yaml
+```
 #Deploy Tiller
+```
 helm init --service-account tiller --wait
-
+```
 
 18.> Install and configure ansible
+```
 apt-get install python-pip
 pip install ansible
+```
+#Login as user Jenkins and create directory "ansible"
 
-#Login as user Jenkins
-mkdir ansible
 #Download of clone guestbook repo in ansible directory from "https://github.com/kubernetes/examples/tree/master/guestbook"
 
 19.> Run ansible playbook to test the guestbook deployment, we'll use the same playbook for deploying Guestbook application via Jenkins
-
+```
 su - jenkins
 cd ansible
 ansible-playbook deploy-guestbook.yaml
-
+```
 20.> We'll use helm chart from git repo "https://github.com/helm/charts" to deploy Prometheus and Grafana:
-
+```
 #Clone the repository locally
 git clone https://github.com/kubernetes/charts
 
 cd ~/charts/stable/prometheus
+```
 #Edit values.yaml as per your needs, in production specify the PV and storageClass
 
 #Deploy prometheus
-
+```
 helm install -f values.yaml stable/prometheus --name prometheus --namespace monitoring
-
+```
 
 21.> Now deploy Grafana
-
+```
 cd ~/charts/stable/prometheus
-#Edit values.yaml as per your needs, set admin password. In production specify the PV and storageClass
-
+```
+Edit values.yaml as per your needs, set admin password. In production specify the PV and storageClass
+```
 helm install -f values.yaml stable/grafana --name grafana --namespace monitoring
-
+```
 
 22.> Configure storageClass in the clsuter.
 
 #Create file gce-pd-sc.yaml with below content:
-
+```
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: slow
+  name: gold
 provisioner: kubernetes.io/gce-pd
 parameters:
   type: pd-standard
   replication-type: none
-
+```
 
 #Run kubectl
-
+```
 kubectl apply -f gce-pd-sc.yaml
-
+```
 #Check storageClass
+```
 abhinit@c1-master-0:~$ kubectl get sc
 NAME   PROVISIONER            AGE
-slow   kubernetes.io/gce-pd   5s
+gold   kubernetes.io/gce-pd   5s
 abhinit@c1-master-0:~$
-
+```
 #Patch the storageClass to be default
-
+```
 kubectl patch storageclass slow -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
-
+```
 23.> We'll need to perform some extra work, so that storage can be provisioned dynamically
-
+```
 a.) Create a ServiceAccount with admin access on compute resources.
 ##Follow documents on https://cloud.google.com/iam/docs/creating-managing-service-accounts#iam-service-accounts-create-console
 
@@ -320,10 +326,10 @@ root@c1-master-0:~#
 ##And run below commmand
 
 sudo kubeadm upgrade apply --config gce.yml
-
+```
 
 24.> Setup elasticsearch, fluentd and kibana
-
+```
 a.) Create kube-logging namespaces
 $vi kube-logging.yaml
 kind: Namespace
@@ -361,3 +367,4 @@ g.) Open in browser "http://<public_ip_of_node>:5601"
 Note- Port 5601 needed to open at VPC
 
 h.) Now add elasticsearch as the Data source in Kibana.
+```
