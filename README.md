@@ -31,7 +31,7 @@ k8s-stackx  34.93.7.80     EXTERNAL                    asia-south1          RESE
 ###
 
 5.> Configure compute instances
-
+Markup: `code()`
 ###Configure Master Servers
 for i in 0 1 2; do
   gcloud compute instances create c1-master-${i} \
