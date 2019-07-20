@@ -12,11 +12,11 @@ Steps:
     $gcloud compute networks subnets create k8s-subnet --network k8s-stackx --range 10.240.0.0/24
    ```
 2.> Create filewall rules
-`
+```
 #gcloud compute firewall-rules create k8s-stackx-allow-internal --allow tcp,udp,icmp --network k8s-stackx --source-ranges 10.240.0.0/24,10.200.0.0/16
 #gcloud compute firewall-rules create k8s-stackx-allow-external --allow tcp:22,tcp:6443,icmp --network k8s-stackx --source-ranges 0.0.0.0/0
 #gcloud compute firewall-rules list --filter="network:k8s-stackx"
-`
+```
 3.> Allocate static IP
 
 `
