@@ -66,7 +66,7 @@ done`
 
 6.> List the configure compute instances
 
-[abhinit@centos7 ~]$ gcloud compute instances list
+`[abhinit@centos7 ~]$ gcloud compute instances list
 NAME         ZONE           MACHINE_TYPE               PREEMPTIBLE  INTERNAL_IP  EXTERNAL_IP    STATUS
 
 ----Master Nodes----
@@ -79,7 +79,7 @@ c1-node-1    asia-south1-c  n1-standard-1                           10.240.0.21 
 c1-node-2    asia-south1-c  n1-standard-1                           10.240.0.22  34.93.104.131  RUNNING
 ----Tool server, jenkins, helm, ansible installed on this node----
 srv-tool     asia-south1-c  n1-standard-1                           10.240.0.3   34.93.27.193   RUNNING
-[abhinit@centos7 ~]$
+[abhinit@centos7 ~]$`
 
 6.> Configure the loadbalancer for kubernetes API service
 ###Get the static public IP, allocated before
