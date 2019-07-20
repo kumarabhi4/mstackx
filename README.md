@@ -1,46 +1,28 @@
-Tasks :
+Prerequisites:
+-------------
+1.> Should have access to Google Cloud, sign up for free tier.
+2.> GCloud SDK should be installed and configured on the local machine (laptop/desktop).
+
+
+Steps:
 ------
-1. Create a Highly available Kubernetes cluster manually using Google Compute Engines (GCE). Do not create
-a Kubernetes hosted solution using Google Kubernetes Engine (GKE). Use Kubeadm(preferred)/kubespray.
-Do not use kops.
-2. Create a CI/CD pipeline using Jenkins (or a CI tool of your choice) outside Kubernetes cluster (not as a pod
-inside Kubernetes cluster).
-3. Create a development namespace.
-4. Deploy guest-book application (or any other application which you think is more suitable to showcase your
-ability, kindly justify why you have chosen a different application) in the development namespace.
-5. Install and configure Helm in Kubernetes
-6. Use Helm to deploy the application on Kubernetes Cluster from CI server.
-7. Create a monitoring namespace in the cluster.
-8. Setup Prometheus (in monitoring namespace) for gathering host/container metrics along with health
-check status of the application.
-9. Create a dashboard using Grafana to help visualize the Node/Container/API Server etc. metrices from
-Prometheus server. Optionally create a custom dashboard on Grafana
-10. Setup log analysis using Elasticsearch, Fluentd (or Filebeat), Kibana.
-11. Demonstrate Blue/Green and Canary deployment for the application (For e.g. Change the background
-color or font in the new version etc.,)
-12. Write a wrapper script (or automation mechanism of your choice) which does all the steps above.
-13. Document the whole process in a README file at the root of your repo. Mention any pre-requisites in the
-README.
-
-STEPS TO COMPLETE ABOVE MENTIONED TASKS:
----------------------------------------
-To complete this task I have used Google cloud free tier. 
-
 1.> Configure network in Google cloud
 
-#gcloud compute networks create k8s-stackx --subnet-mode custom
-#gcloud compute networks subnets create k8s-subnet --network k8s-stackx --range 10.240.0.0/24
+$gcloud compute networks create k8s-stackx --subnet-mode custom
+$gcloud compute networks subnets create k8s-subnet --network k8s-stackx --range 10.240.0.0/24
 
 2.> Create filewall rules
+
 #gcloud compute firewall-rules create k8s-stackx-allow-internal --allow tcp,udp,icmp --network k8s-stackx --source-ranges 10.240.0.0/24,10.200.0.0/16
 #gcloud compute firewall-rules create k8s-stackx-allow-external --allow tcp:22,tcp:6443,icmp --network k8s-stackx --source-ranges 0.0.0.0/0
 #gcloud compute firewall-rules list --filter="network:k8s-stackx"
 
-3.> Allocate static IP 
-#gcloud compute addresses create k8s-stackx --region $(gcloud config get-value compute/region)
+3.> Allocate static IP
 
+#gcloud compute addresses create k8s-stackx --region $(gcloud config get-value compute/region)
 #gcloud compute addresses list --filter="name=('k8s-stackx')"
 
+4.> List down the public static IP and take node of it.
 ###
 [abhinit@centos7 ~]$ gcloud compute addresses list --filter="name=('k8s-stackx')"
 NAME        ADDRESS/RANGE  TYPE      PURPOSE  NETWORK  REGION       SUBNET  STATUS
@@ -48,7 +30,7 @@ k8s-stackx  34.93.7.80     EXTERNAL                    asia-south1          RESE
 [abhinit@centos7 ~]$
 ###
 
-4.> Configure compute instances
+5.> Configure compute instances
 
 ###Configure Master Servers
 for i in 0 1 2; do
@@ -81,7 +63,7 @@ for i in 0 1 2; do
     --tags k8s-stackx,node
 done
 
-5.> List the configure compute instances
+6.> List the configure compute instances
 
 [abhinit@centos7 ~]$ gcloud compute instances list
 NAME         ZONE           MACHINE_TYPE               PREEMPTIBLE  INTERNAL_IP  EXTERNAL_IP    STATUS
@@ -215,29 +197,11 @@ mkdir helm
 cd helm
 
 #Create Tiller service account, content for tiller SA, tiller-serviceaccount.yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: tiller
-  namespace: kube-system
-
-kubectl apply -f service-account.yaml
+a
+#kubectl apply -f service-account.yaml
 
 #Create cluster account rolebinding, role-binding.yaml with below content
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: tiller
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
-subjects:
-  - kind: ServiceAccount
-    name: tiller
-    namespace: kube-system
-
-kubectl apply -f role-binding.yaml
+#kubectl apply -f role-binding.yaml
 
 #Deploy Tiller
 helm init --service-account tiller --wait
@@ -342,14 +306,42 @@ root@c1-master-0:~#
 sudo kubeadm upgrade apply --config gce.yml
 
 
-24.> We'll use helm chart from git repo "https://github.com/helm/charts" to deploy elasticsearch.
+24.> Setup elasticsearch, fluentd and kibana
 
-git clone https://github.com/helm/charts
-cd charts/stable/elasticsearch
+a.) Create kube-logging namespaces
+$vi kube-logging.yaml
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: kube-logging
 
-#Edit values.yml as required
+$kubectl create -f kube-logging.yaml
 
-helm install -f values.yaml stable/elasticsearch --name elasticsearch --namespace kube-logging
+b.) Create headless service
+
+$kubectl create -f elasticsearch_svc.yaml  
+
+c.) Create StatefulSet
+$kubectl create -f elasticsearch_statefulset.yaml
+
+#Monitor the status of StatefulSet
+$kubectl rollout status sts/es-cluster --namespace=kube-logging
+
+d.) Rollout kibana dashboard
+
+$kubectl create -f kibana.yaml
+
+#Monitor the status of kibana Rollout
+$kubectl rollout status deployment/kibana --namespace=kube-logging
+
+e.) Create fluentd DaemonSet
+$kubectl create -f fluentd.yaml
 
 
-25.> 
+f.) Port forward to access Kibana dashboard
+$kubectl port-forward kibana-67f95cc5f4-vv4kd 5601:5601 --namespace=kube-logging      
+
+g.) Open in browser "http://<public_ip_of_node>:5601"
+Note- Port 5601 needed to open at VPC
+
+h.) Now add elasticsearch as the Data source in Kibana.
