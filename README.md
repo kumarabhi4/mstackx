@@ -89,7 +89,7 @@ srv-tool     asia-south1-c  n1-standard-1                           10.240.0.3  
 [abhinit@centos7 ~]$
 ```
 
-6.> Configure the loadbalancer for kubernetes API service
+7.> Configure the loadbalancer for kubernetes API service
 ###Get the static public IP, allocated before
 ```
 KUBERNETES_PUBLIC_ADDRESS=$(gcloud compute addresses describe k8s-stackx --region $(gcloud config get-value compute/region) --format 'value(address)')
@@ -115,7 +115,7 @@ gcloud compute target-pools add-instances kubernetes-target-pool --instances c1-
 gcloud compute forwarding-rules create kubernetes-forwarding-rule --address ${KUBERNETES_PUBLIC_ADDRESS} --ports 6443 --region $(gcloud config get-value compute/region) --target-pool kubernetes-target-pool
 ```
 
-7.> Install Docker, Kubeadm and kubelet on all the master nodes
+8.> Install Docker, Kubeadm and kubelet on all the master nodes
 ```
 curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
 
@@ -129,7 +129,7 @@ apt-get update
 apt-get install -y docker.io kubelet kubeadm kubectl
 ```
 
-8.> Create file "kubeadm-config.yaml" on c1-master-0 node with below content
+9.> Create file "kubeadm-config.yaml" on c1-master-0 node with below content
 
 ```
 apiVersion: kubeadm.k8s.io/v1beta2
@@ -138,11 +138,11 @@ kubernetesVersion: stable
 controlPlaneEndpoint: "LOAD_BALANCER_DNS:LOAD_BALANCER_PORT"
 ```
 
-9.> Initialize the control plane
+10.> Initialize the control plane
 ```
 kubeadm init --config=kubeadm-config.yaml --upload-certs
 ```
-10.> Add other control plane server and workers and configure kubectl. Below snippet is after the kubeadm initialized on the first master node
+11.> Add other control plane server and workers and configure kubectl. Below snippet is after the kubeadm initialized on the first master node
 ```
 <snip>
 You can now join any number of the control-plane node running the following command on each as root:
@@ -165,7 +165,7 @@ Then you can join any number of worker nodes by running the following on each as
 </snip>
 ```
 
-11> Used network plugin "Calico" initially, steps are below, but that failed somehow and didn't have much time so went with weave:-
+12> Used network plugin "Calico" initially, steps are below, but that failed somehow and didn't have much time so went with weave:-
 ```
 wget https://docs.projectcalico.org/v3.3/getting-started/kubernetes/installation/hosted/rbac-kdd.yaml
 wget https://docs.projectcalico.org/v3.3/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
@@ -173,16 +173,16 @@ wget https://docs.projectcalico.org/v3.3/getting-started/kubernetes/installation
 kubectl apply -f rbac-kdd.yaml
 kubectl apply -f calico.yaml
 ```
-12.> Deleted calico pods and deployed weave
+13.> Deleted calico pods and deployed weave
 ```
 kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
 ```
-13.> Prepare Jenkins server on tools server
+14.> Prepare Jenkins server on tools server
 ```
 gcloud compute instances create srv-tool --async --boot-disk-size 200GB --can-ip-forward --image-family ubuntu-1604-lts --image-project ubuntu-os-cloud --machine-type n1-standard-1 \
 --private-network-ip 10.240.0.3 --scopes compute-rw,storage-ro,service-management,service-control,logging-write,monitoring --subnet k8s-subnet --tags k8s-stackx,tools
 ```
-14.> Install jenkins
+15.> Install jenkins
 ```
 apt-get install default-jre
 
@@ -196,18 +196,18 @@ apt-get install jenkins
 systemctl status jenkins
 ```
 
-15.> Configure jenkins to use kubectl
+16.> Configure jenkins to use kubectl
 ```
 su - jenkins
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
-16.> Install and configure Helm
+17.> Install and configure Helm
 ```
 curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > get_helm.sh; chmod 700 get_helm.sh; ./get_helm.sh
 ```
-17.> Configure helm
+18.> Configure helm
 ```
 mkdir helm
 cd helm
@@ -225,7 +225,7 @@ kubectl apply -f role-binding.yaml
 helm init --service-account tiller --wait
 ```
 
-18.> Install and configure ansible
+19.> Install and configure ansible
 ```
 apt-get install python-pip
 pip install ansible
@@ -234,13 +234,13 @@ pip install ansible
 
 #Download of clone guestbook repo in ansible directory from "https://github.com/kubernetes/examples/tree/master/guestbook"
 
-19.> Run ansible playbook to test the guestbook deployment, we'll use the same playbook for deploying Guestbook application via Jenkins
+20.> Run ansible playbook to test the guestbook deployment, we'll use the same playbook for deploying Guestbook application via Jenkins
 ```
 su - jenkins
 cd ansible
 ansible-playbook deploy-guestbook.yaml
 ```
-20.> We'll use helm chart from git repo "https://github.com/helm/charts" to deploy Prometheus and Grafana:
+21.> We'll use helm chart from git repo "https://github.com/helm/charts" to deploy Prometheus and Grafana:
 ```
 #Clone the repository locally
 git clone https://github.com/kubernetes/charts
@@ -254,7 +254,7 @@ cd ~/charts/stable/prometheus
 helm install -f values.yaml stable/prometheus --name prometheus --namespace monitoring
 ```
 
-21.> Now deploy Grafana
+22.> Now deploy Grafana
 ```
 cd ~/charts/stable/prometheus
 ```
@@ -263,7 +263,7 @@ Edit values.yaml as per your needs, set admin password. In production specify th
 helm install -f values.yaml stable/grafana --name grafana --namespace monitoring
 ```
 
-22.> Configure storageClass in the clsuter.
+23.> Configure storageClass in the clsuter.
 
 #Create file gce-pd-sc.yaml with below content:
 ```
@@ -292,7 +292,7 @@ abhinit@c1-master-0:~$
 ```
 kubectl patch storageclass slow -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
 ```
-23.> We'll need to perform some extra work, so that storage can be provisioned dynamically
+24.> We'll need to perform some extra work, so that storage can be provisioned dynamically
 ```
 a.) Create a ServiceAccount with admin access on compute resources.
 ##Follow documents on https://cloud.google.com/iam/docs/creating-managing-service-accounts#iam-service-accounts-create-console
@@ -328,7 +328,7 @@ root@c1-master-0:~#
 sudo kubeadm upgrade apply --config gce.yml
 ```
 
-24.> Setup elasticsearch, fluentd and kibana
+25.> Setup elasticsearch, fluentd and kibana
 ```
 a.) Create kube-logging namespaces
 $vi kube-logging.yaml
