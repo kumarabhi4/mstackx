@@ -7,10 +7,10 @@ Prerequisites:
 Steps:
 ------
 1.> Configure network in Google cloud
-
+`
 $gcloud compute networks create k8s-stackx --subnet-mode custom
 $gcloud compute networks subnets create k8s-subnet --network k8s-stackx --range 10.240.0.0/24
-
+`
 2.> Create filewall rules
 
 #gcloud compute firewall-rules create k8s-stackx-allow-internal --allow tcp,udp,icmp --network k8s-stackx --source-ranges 10.240.0.0/24,10.200.0.0/16
@@ -23,15 +23,16 @@ $gcloud compute networks subnets create k8s-subnet --network k8s-stackx --range 
 #gcloud compute addresses list --filter="name=('k8s-stackx')"
 
 4.> List down the public static IP and take node of it.
+`
 ###
 [abhinit@centos7 ~]$ gcloud compute addresses list --filter="name=('k8s-stackx')"
 NAME        ADDRESS/RANGE  TYPE      PURPOSE  NETWORK  REGION       SUBNET  STATUS
 k8s-stackx  34.93.7.80     EXTERNAL                    asia-south1          RESERVED
 [abhinit@centos7 ~]$
 ###
-
+`
 5.> Configure compute instances
-Markup: `code()`
+`
 ###Configure Master Servers
 for i in 0 1 2; do
   gcloud compute instances create c1-master-${i} \
@@ -46,7 +47,7 @@ for i in 0 1 2; do
     --subnet k8s-subnet \
     --tags k8s-stackx,master
 done
-
+`
 ####Configure worker nodes
 for i in 0 1 2; do
   gcloud compute instances create c1-node-${i} \
