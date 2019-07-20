@@ -19,21 +19,24 @@ Steps:
 ```
 3.> Allocate static IP
 
-`
+```
 #gcloud compute addresses create k8s-stackx --region $(gcloud config get-value compute/region)
 #gcloud compute addresses list --filter="name=('k8s-stackx')"
-`
+```
 
 4.> List down the public static IP and take node of it.
 
-`[abhinit@centos7 ~]$ gcloud compute addresses list --filter="name=('k8s-stackx')"
+```
+[abhinit@centos7 ~]$ gcloud compute addresses list --filter="name=('k8s-stackx')"
 NAME        ADDRESS/RANGE  TYPE      PURPOSE  NETWORK  REGION       SUBNET  STATUS
 k8s-stackx  34.93.7.80     EXTERNAL                    asia-south1          RESERVED
-[abhinit@centos7 ~]$`
+[abhinit@centos7 ~]$
+```
 
 5.> Configure compute instances
 
-`Configure Master Servers
+```
+Configure Master Servers
 for i in 0 1 2; do
   gcloud compute instances create c1-master-${i} \
     --async \
@@ -46,9 +49,11 @@ for i in 0 1 2; do
     --scopes compute-rw,storage-ro,service-management,service-control,logging-write,monitoring \
     --subnet k8s-subnet \
     --tags k8s-stackx,master
-done`
+done
+```
 
-`Configure worker nodes
+```
+Configure worker nodes
 for i in 0 1 2; do
   gcloud compute instances create c1-node-${i} \
     --async \
@@ -62,11 +67,13 @@ for i in 0 1 2; do
     --scopes compute-rw,storage-ro,service-management,service-control,logging-write,monitoring \
     --subnet k8s-subnet \
     --tags k8s-stackx,node
-done`
+done
+```
 
 6.> List the configure compute instances
 
-`[abhinit@centos7 ~]$ gcloud compute instances list
+```
+[abhinit@centos7 ~]$ gcloud compute instances list
 NAME         ZONE           MACHINE_TYPE               PREEMPTIBLE  INTERNAL_IP  EXTERNAL_IP    STATUS
 
 ----Master Nodes----
@@ -79,56 +86,64 @@ c1-node-1    asia-south1-c  n1-standard-1                           10.240.0.21 
 c1-node-2    asia-south1-c  n1-standard-1                           10.240.0.22  34.93.104.131  RUNNING
 ----Tool server, jenkins, helm, ansible installed on this node----
 srv-tool     asia-south1-c  n1-standard-1                           10.240.0.3   34.93.27.193   RUNNING
-[abhinit@centos7 ~]$`
+[abhinit@centos7 ~]$
+```
 
 6.> Configure the loadbalancer for kubernetes API service
 ###Get the static public IP, allocated before
+```
 KUBERNETES_PUBLIC_ADDRESS=$(gcloud compute addresses describe k8s-stackx --region $(gcloud config get-value compute/region) --format 'value(address)')
-
+```
 ###Create health-check for LB
+```
 gcloud compute http-health-checks create kubernetes --description "Kubernetes Health Check" --host "kubernetes.default.svc.cluster.local" --request-path "/healthz"
-
+```
 ###Create firewall rules for LB
+```
 gcloud compute firewall-rules create k8s-stackx-allow-health-check --network k8s-stackx --source-ranges 34.93.0.0/16,0.0.0.0/0 --allow tcp
-
+```
 ###Create target pools
+```
 gcloud compute target-pools create kubernetes-target-pool --http-health-check kubernetes
-
+```
 ###Include Master servers in the target pool
+```
 gcloud compute target-pools add-instances kubernetes-target-pool --instances c1-master-0,c1-master-1,c1-master-2
-
+```
 ###Create forwarding rule from LB to master servers
+```
 gcloud compute forwarding-rules create kubernetes-forwarding-rule --address ${KUBERNETES_PUBLIC_ADDRESS} --ports 6443 --region $(gcloud config get-value compute/region) --target-pool kubernetes-target-pool
-
+```
 
 7.> Install Docker, Kubeadm and kubelet on all the master nodes
-#curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+```
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
 
-#
+
 bash -c 'cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
 deb https://apt.kubernetes.io/ kubernetes-xenial main
 EOF'
-#
+
 
 apt-get update
 apt-get install -y docker.io kubelet kubeadm kubectl
-
+```
 
 8.> Create file "kubeadm-config.yaml" on c1-master-0 node with below content
 
-#
+```
 apiVersion: kubeadm.k8s.io/v1beta2
 kind: ClusterConfiguration
 kubernetesVersion: stable
 controlPlaneEndpoint: "LOAD_BALANCER_DNS:LOAD_BALANCER_PORT"
-#
+```
 
 9.> Initialize the control plane
-
+```
 kubeadm init --config=kubeadm-config.yaml --upload-certs
-
-10.> Add other control plane server and workers and configure kubectl
-
+```
+10.> Add other control plane server and workers and configure kubectl. Below snippet is after the kubeadm initialized on the first master node
+```
 <snip>
 You can now join any number of the control-plane node running the following command on each as root:
 
@@ -148,7 +163,7 @@ Then you can join any number of worker nodes by running the following on each as
   sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
   sudo chown $(id -u):$(id -g) $HOME/.kube/config
 </snip>
-
+```
 
 11> Used network plugin "Calico" initially, steps are below, but that failed somehow and didn't have much time so went with weave:-
 
