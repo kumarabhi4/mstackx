@@ -100,7 +100,7 @@ gcloud compute http-health-checks create kubernetes --description "Kubernetes He
 ```
 ###Create firewall rules for LB
 ```
-gcloud compute firewall-rules create k8s-stackx-allow-health-check --network k8s-stackx --source-ranges 34.93.0.0/16,0.0.0.0/0 --allow tcp
+gcloud compute firewall-rules create k8s-stackx-allow-health-check --network k8s-stackx --source-ranges 209.85.152.0/22,209.85.204.0/22,35.191.0.0/16 --allow tcp
 ```
 ###Create target pools
 ```
